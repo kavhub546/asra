@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ASRA Dashboard</title>
+
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #e2e8f0;
+            font-family: "Segoe UI", Arial, sans-serif;
+            text-align: center;
+            padding: 40px;
+        }
+
+        h1 {
+            margin-bottom: 40px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .card {
+            background-color: #1e293b;
+            padding: 30px;
+            margin: 0 auto;
+            width: 65%;
+            border-radius: 16px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        .metric {
+            font-size: 22px;
+            margin: 12px 0;
+        }
+
+        .critical { color: #ef4444; }
+        .warning { color: #facc15; }
+        .stable { color: #22c55e; }
+
+        .trend {
+            font-family: monospace;
+            margin-top: 20px;
+            font-size: 20px;
+        }
+
+        .footer {
+            margin-top: 40px;
+            opacity: 0.6;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>ASRA — Autonomous System Resilience Agent</h1>
+
+    <div class="card">
+
+        <div id="state" class="metric">Loading...</div>
+
+        <div id="memory" class="metric"></div>
+        <div id="stability" class="metric"></div>
+        <div id="suspended" class="metric"></div>
+        <div id="ai_calls" class="metric"></div>
+        <div id="decision" class="metric"></div>
+
+        <div id="trend" class="trend"></div>
+
+    </div>
+
+    <div class="footer">
+        Background AI Memory Orchestration Engine
+    </div>
+
+    <script>
+        function sparkline(data) {
+            const bars = "▁▂▃▄▅▆▇█";
+            if (!data.length) return "";
+            let min = Math.min(...data);
+            let max = Math.max(...data);
+            let span = max - min || 1;
+
+            return data.map(v => {
+                let idx = Math.floor((v - min) / span * (bars.length - 1));
+                return bars[idx];
+            }).join("");
+        }
+
+        async function fetchStatus() {
+            const res = await fetch('/status');
+            const data = await res.json();
+
+            let stateText = "";
+            let stateClass = "";
+
+            if (data.mem_pct < 75) {
+                stateText = "STABLE";
+                stateClass = "stable";
+            } else if (data.mem_pct < 90) {
+                stateText = "WARNING";
+                stateClass = "warning";
+            } else {
+                stateText = "CRITICAL PRESSURE";
+                stateClass = "critical";
+            }
+
+            document.getElementById("state").innerHTML =
+                `<span class="${stateClass}">${stateText}</span>`;
+
+            document.getElementById("memory").innerText =
+                `Memory Usage: ${data.mem_pct.toFixed(1)}%`;
+
+            document.getElementById("stability").innerText =
+                `Stability Score: ${data.stability.toFixed(1)}%`;
+
+            document.getElementById("suspended").innerText =
+                `Suspended Processes: ${data.suspended_count}`;
+
+            document.getElementById("ai_calls").innerText =
+                `AI Decisions: ${data.ai_calls}`;
+
+            document.getElementById("decision").innerText =
+                `Last Action: ${data.last_decision}`;
+
+            document.getElementById("trend").innerText =
+                sparkline(data.mem_history);
+        }
+
+        setInterval(fetchStatus, 1000);
+        fetchStatus();
+    </script>
+
+</body>
+</html>

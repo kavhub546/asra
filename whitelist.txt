@@ -1,0 +1,6 @@
+brave.exe
+code.exe
+ollama.exe
+powershell.exe
+cmd.exe
+python.exe
